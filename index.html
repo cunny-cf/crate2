@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Webhook Drive</title>
+<style>
+:root{--side:#131314;--bg:#1b1b1c;--ink:#e3e3e3;--mute:#c4c7c5;--dim:#9aa0a6;--line:#2f3033;--acc:#a8c7fa;--accbg:#004a77;--accfg:#c2e7ff;--hov:#ffffff12;--sel:#1c3a5e;--field:#282a2c;--bad:#f28b82;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--side);color:var(--ink);font:14px/1.45 "Google Sans",Roboto,system-ui,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+input[type=text],input[type=password],select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--field);color:var(--ink);font:inherit}
+label{display:block;font-size:.8rem;color:var(--dim);margin:10px 0 3px}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.btn{padding:9px 20px;border-radius:20px;border:1px solid #8e918f;background:none;color:var(--acc)}.btn:hover{background:var(--hov)}.btn.p{background:var(--acc);border-color:var(--acc);color:#062e6f}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+small{color:var(--dim)}
+header{display:flex;align-items:center;gap:8px;padding:8px 16px;position:sticky;top:0;background:var(--side);z-index:5;height:64px}
+.brand{display:flex;align-items:center;gap:10px;width:232px;font-size:1.3rem;color:var(--mute);white-space:nowrap}.lg{width:40px;height:36px}
+.search{flex:1;max-width:720px;display:flex;align-items:center;gap:12px;background:var(--field);border-radius:24px;padding:0 16px;height:48px;color:var(--mute)}.search:focus-within{background:#303134}
+.search input{border:0;background:transparent;color:var(--ink);font:inherit;width:100%;outline:0;height:100%}
+.sp{flex:1}
+.ib{border:0;background:none;border-radius:50%;width:40px;height:40px;display:grid;place-items:center;color:var(--mute);font-size:1.2rem}.ib:hover{background:var(--hov)}
+.av{width:32px;height:32px;border-radius:50%;border:0;background:#7c4dff;color:#fff;font-weight:600;margin-left:6px}
+.i{width:24px;height:24px;fill:currentColor;flex:none}.i.big{width:56px;height:56px}
+.wrap{display:flex;padding:0 16px 16px 0}
+nav{width:256px;flex:none;padding:4px 12px 8px;display:flex;flex-direction:column;gap:2px}
+.new{display:flex;gap:12px;align-items:center;align-self:flex-start;margin:4px 0 16px;padding:16px 24px 16px 16px;border:0;border-radius:16px;background:var(--field);box-shadow:0 1px 3px #0006;font-weight:500;font-size:.95rem}.new:hover{background:#303134}.new .i{color:var(--acc)}
+.nv{display:flex;gap:14px;align-items:center;padding:0 16px;height:40px;border-radius:20px;color:var(--ink);text-decoration:none;background:none;border:0;text-align:left}.nv:hover{background:var(--hov)}.nv.on{background:var(--accbg);color:var(--accfg)}
+.stor{margin-top:16px;padding:16px;color:var(--dim);border-top:1px solid var(--line)}
+main{flex:1;min-width:0;background:var(--bg);border-radius:16px;padding:8px 16px 90px;min-height:calc(100vh - 80px)}
+.bar{display:flex;align-items:center;justify-content:space-between;min-height:48px;gap:8px}
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:2px;font-size:1.3rem;min-width:0}
+.crumbs a,.crumbs b{color:var(--ink);text-decoration:none;padding:4px 10px;border-radius:18px;font-weight:400}.crumbs a:hover{background:var(--hov)}.crumbs span{color:var(--dim)}
+#sb{display:flex;align-items:center;gap:4px;background:var(--accbg);color:var(--accfg);border-radius:24px;padding:4px 8px;min-width:0;overflow-x:auto}#sb button{border:0;background:none;padding:8px 12px;border-radius:18px;white-space:nowrap}#sb button:hover{background:#ffffff1f}#sbn{padding:0 10px;white-space:nowrap}
+.head,.r{display:grid;grid-template-columns:minmax(0,1fr) 190px 100px 40px;align-items:center;gap:8px;padding:0 12px}
+.head{height:44px;border-bottom:1px solid var(--line)}.head button{border:0;background:none;color:var(--mute);font-weight:500;text-align:left;padding:0}.head button:hover{color:var(--ink)}
+.r{min-height:52px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}.r:hover{background:var(--hov)}.r.on{background:var(--sel)}
+.nm{display:flex;align-items:center;gap:16px;min-width:0}
+.t{display:flex;flex-direction:column;min-width:0}.t b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub{display:none;color:var(--dim);font-size:.75rem}.mu{color:var(--mute);font-size:.85rem}
+.more{border:0;background:none;color:var(--mute);border-radius:50%;width:36px;height:36px;font-size:1.3rem}.more:hover{background:#ffffff1f}
+#list.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;padding-top:8px}
+.c{background:var(--field);border-radius:12px;cursor:pointer;user-select:none;border:2px solid transparent;overflow:hidden}.c:hover{background:#303134}.c.on{background:var(--sel);border-color:var(--acc)}
+.cv{height:130px;display:grid;place-items:center;background:#1e1f20}.c.on .cv{background:#16314f}
+.cn{display:flex;align-items:center;gap:10px;padding:4px 4px 4px 12px}.cn b{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{padding:64px 0;text-align:center;color:var(--dim);grid-column:1/-1}
+.fab{display:none;position:fixed;right:18px;bottom:18px;width:56px;height:56px;border:0;border-radius:16px;background:var(--accbg);color:var(--accfg);box-shadow:0 2px 8px #0008;place-items:center;z-index:6}
+#menu{position:fixed;z-index:20;background:#2b2c2e;border-radius:8px;box-shadow:0 4px 16px #000a;min-width:200px;padding:8px 0}
+#menu button{display:block;width:100%;text-align:left;padding:10px 16px;border:0;background:none}#menu button:hover{background:var(--hov)}#menu .del{color:var(--bad)}
+dialog{background:#2b2c2e;color:var(--ink);border:0;border-radius:24px;width:min(560px,94vw);padding:20px;max-height:90vh}
+dialog::backdrop{background:#000a}
+dialog h2{font-size:1.1rem;margin:14px 0 4px;font-weight:500}
+#mvl{max-height:50vh;overflow:auto;margin-top:8px}#mvl button{display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-radius:8px;background:none}#mvl button:hover{background:var(--hov)}
+#log{font:.78rem/1.4 ui-monospace,monospace;white-space:pre-wrap;max-height:180px;overflow:auto;color:var(--dim)}#log .bad{color:var(--bad)}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#e3e3e3;color:#1f1f1f;padding:12px 18px;border-radius:6px;z-index:60;max-width:92vw;word-break:break-word}
+#drop{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:#a8c7fa22;border:3px dashed var(--acc);font-size:1.3rem;pointer-events:none}
+#pvd{width:min(900px,96vw)}#pvb img,#pvb video{max-width:100%;max-height:70vh;display:block;margin:10px auto}#pvb audio{width:100%;margin-top:10px}
+progress#bar{position:fixed;top:0;left:0;width:100%;height:3px;margin:0;z-index:50}
+#login{max-width:380px;margin:12vh auto 0;background:var(--bg);border-radius:24px;padding:28px}
+#login h1{font-size:1.5rem;margin:0 0 4px;font-weight:400}
+@media(max-width:720px){nav,.head{display:none}.r{grid-template-columns:minmax(0,1fr) 40px}.r .mu{display:none}.sub{display:block}.fab{display:grid}.brand{width:auto}.brand span{display:none}main{border-radius:12px;margin:0 8px}.wrap{padding:0 0 8px}#list.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+.meter{height:4px;background:#444746;border-radius:2px;margin:0 0 8px;overflow:hidden}.meter i{display:block;height:100%;background:var(--acc)}
+.st{color:#fdd663;margin:0 4px}
+.cv{position:relative;overflow:hidden}.cv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s}.cv img.ok{opacity:1}
+#wb{position:fixed;top:0;left:0;right:0;z-index:70;background:#b3261e;color:#fff;padding:10px 16px;text-align:center}#wb a{color:#fff;font-weight:600;margin-left:6px;text-decoration:underline}
+</style>
+</head>
+<body>
+<div id="login">
+<h1>Webhook Drive</h1><small>Sign in to your drive</small>
+<label for="ln">Username</label><input type="text" id="ln" autocomplete="username">
+<label for="lp">Password</label><input type="password" id="lp" autocomplete="current-password">
+<div class="row"><button class="btn p" id="go">Sign in</button><button class="btn" id="ls">Server settings</button></div>
+<p><small>Test account: admin / admin</small></p>
+</div>
+
+<div id="app" hidden>
+<header>
+<div class="brand"><svg class="lg" viewBox="0 0 40 36" aria-hidden="true"><path fill="#fbbc04" d="M14 1h12l14 24H28z"/><path fill="#34a853" d="M14 1L0 25l6 10 14-24z"/><path fill="#4285f4" d="M6 35h28l6-10H12z"/></svg><span>Webhook Drive</span></div>
+<label class="search"><svg class="i" viewBox="0 0 24 24"><path d="M15.5 14h-.8l-.3-.3A6.5 6.5 0 1 0 14 15.5l.3.3v.8l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg><input id="q" type="search" placeholder="Search in Drive" aria-label="Search"></label>
+<span class="sp"></span>
+<button class="ib" id="rf" title="Sync" aria-label="Sync"><svg class="i" viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+<button class="ib" id="gear" title="Settings" aria-label="Settings">⚙</button>
+<button class="av" id="av" aria-label="Account"></button>
+</header>
+<div class="wrap">
+<nav>
+<button class="new" id="new"><svg class="i" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>New</button>
+<a class="nv on" data-v="d" href="#/"><svg class="i" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm0 12H4V8h16v10z"/></svg>My Drive</a>
+<a class="nv" data-v="r" href="#/~recent"><svg class="i" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>Recent</a>
+<a class="nv" data-v="s" href="#/~starred"><svg class="i" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>Starred</a>
+<a class="nv" data-v="t" href="#/~trash"><svg class="i" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>Trash</a>
+<button class="nv" id="st"><svg class="i" viewBox="0 0 24 24"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A6 6 0 0 0 6 20h13a5 5 0 0 0 .35-9.96z"/></svg>Settings</button>
+<div class="stor" id="stor"></div>
+</nav>
+<main>
+<div class="bar"><div class="crumbs" id="crumbs"></div>
+<div id="sb" hidden><button data-a="clr" aria-label="Clear selection">✕</button><span id="sbn"></span><span id="sbb"></span></div>
+<button class="btn" id="et" hidden>Empty trash</button><button class="ib" id="vt" aria-label="Switch layout"></button></div>
+<div class="head" id="head"><button data-s="name">Name</button><button data-s="mod">Modified</button><button data-s="size">Size</button><span></span></div>
+<div id="list"></div>
+</main>
+</div>
+<button class="fab" id="fab" aria-label="New"><svg class="i" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+</div>
+
+<progress id="bar" value="0" max="1" hidden></progress>
+<input type="file" id="pick" multiple hidden>
+<div id="menu" hidden></div>
+<div id="toast" hidden></div>
+<div id="drop" hidden>Drop files to upload</div>
+
+<dialog id="mvd"><b>Move to</b><div id="mvl"></div><div class="row"><button class="btn" onclick="this.closest('dialog').close()">Cancel</button></div></dialog>
+
+<dialog id="pvd"><div class="row" style="justify-content:space-between;margin:0"><b id="pvt"></b><button class="btn" onclick="this.closest('dialog').close()">Close</button></div><div id="pvb"></div></dialog>
+
+<dialog id="set">
+<div class="top row" style="justify-content:space-between;margin:0"><b id="who"></b><small id="role"></small></div>
+<h2>Server</h2>
+<label for="px">Worker address, e.g. https://your-worker.workers.dev</label><input type="text" id="px" autocomplete="off">
+<label for="sk">Setup key (only for creating the first admin)</label><input type="password" id="sk" autocomplete="off">
+<label for="dm">Download mode</label><select id="dm"><option value="auto">Auto: folder mode on desktop Chrome, proxy elsewhere</option><option value="worker">Always use the proxy</option></select>
+<div class="row"><button class="btn" id="chk">Check Worker</button><button class="btn" id="mk1">Create first admin</button></div>
+<div id="conn" hidden>
+<h2>Connection</h2>
+<label for="mh">Metadata webhook</label><input type="password" id="mh" autocomplete="off">
+<label for="dh">Data webhook</label><input type="password" id="dh" autocomplete="off">
+<div class="row"><button class="btn" id="prov">Rotate webhooks</button><button class="btn" id="test">Test</button><button class="btn" id="stt">Upload self-test</button></div>
+</div>
+<div id="users" hidden>
+<h2>Users</h2>
+<div id="ulist"></div>
+<label for="nn">New username</label><input type="text" id="nn" autocomplete="off">
+<label for="np">Password</label><input type="password" id="np" autocomplete="new-password">
+<label for="nr">Role</label><select id="nr"><option>user</option><option>admin</option></select>
+<div class="row"><button class="btn p" id="add">Create user</button></div>
+</div>
+<h2>Log</h2><div id="log"></div>
+<div class="row"><button class="btn" id="out">Sign out</button><button class="btn" onclick="this.closest('dialog').close()">Close</button></div>
+</dialog>
+
+<div id="wb" hidden></div>
+<script>
+const $=s=>document.querySelector(s);
+const CH=19*1024*1024,BATCH=4,GAP=5000,J={'Content-Type':'application/json'};
+const D=Object.assign({proxy:'',bot:'',guild:'1561537402894426174',accts:{},session:'',files:{}},JSON.parse(localStorage.dd||'{}'));
+const save=()=>localStorage.dd=JSON.stringify(D);
+let A=null,cur='';
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>n>=1e12?(n/1e12).toFixed(2)+' TB':n>=1e9?(n/1e9).toFixed(2)+' GB':n>=1e6?(n/1e6).toFixed(1)+' MB':Math.ceil(n/1e3)+' KB';
+const dt=t=>{const d=new Date(t),p=n=>String(n).padStart(2,'0');return p(d.getMonth()+1)+'/'+p(d.getDate())+'/'+String(d.getFullYear()).slice(2)+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds())};
+function log(m,bad){const d=document.createElement('div');if(bad)d.className='bad';d.textContent=m;$('#log').prepend(d);if(bad||/^(Saved|Deleted|Downloaded|Created)/.test(m))toast(m)}
+function progress(v){const b=$('#bar');b.hidden=false;b.value=v;if(v>=1)setTimeout(()=>b.hidden=true,800)}
+async function hp(uuid,p){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(uuid+':'+p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const L=()=>(D.files[A.uuid]??={list:[],last:''});
+
+// Discord calls: webhook (hf) and bot (bot), both retry on rate limits
+const wrapU=u=>{const p=(D.proxy||'').trim();return/[?=]$/.test(p)?p+encodeURIComponent(u):p.replace(/\/?$/,'/')+u};
+async function hf(hook,path,opt={}){
+  for(let t=0;t<5;t++){
+    let r;const m=opt.method||'GET',px=(D.proxy||'').trim();
+    try{r=await fetch(px&&m!=='GET'?wrapU(hook+path):hook+path,opt)}
+    catch(e){
+      if(px&&m==='GET'){try{r=await fetch(wrapU(hook+path),opt)}catch{}}
+      if(!r)throw new Error('Request never reached Discord (browser blocked it or no network): '+m+' webhook'+path);
+    }
+    if(r.status===429){const j=await r.json().catch(()=>({}));await sleep((j.retry_after||1)*1000+200);continue}
+    if(!r.ok){const tx=await r.text();if(r.status===404&&/10015/.test(tx))hookGone(hook);throw new Error(r.status+' '+tx)}
+    return r.status===204?null:r.json();
+  }
+  throw new Error('Rate limited too many times');
+}
+function botRoute(){if(location.hash!=='#/bot/update')return;history.replaceState(null,'',location.pathname+location.search+'#/');if(A)sync(false).catch(e=>log(e.message,1))}
+// Worker API: it holds the bot token and server ID. The page calls it for sign-in, new users, listing, rotation and link refresh only.
+function setApi(v){v=(v||'').trim().replace(/(\/?\?url=)?\/*$/,'');D.api=v;D.proxy=v?v+'/?url=':''}
+async function api(path,body){
+  if(!D.api)throw new Error('Set the Worker address under Settings first.');
+  let r;
+  try{r=await fetch(D.api+path,{method:'POST',headers:J,body:JSON.stringify({t:A?.token,...body})})}
+  catch{throw new Error('Could not reach the Worker (wrong address, or it is down).')}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.error||'Worker error '+r.status);
+  return j;
+}
+const hookUrl=p=>'https://discord.com/api/webhooks/'+p;
+async function login(){
+  const name=$('#ln').value.trim().toLowerCase();
+  const j=await api('/login',{name,password:$('#lp').value});
+  const a={uuid:j.user.uuid,name,role:j.user.role,token:j.token,used:j.used,smid:j.smid,meta:{chan:j.meta.chan,hook:hookUrl(j.meta.path)},data:{chan:j.data.chan,hook:hookUrl(j.data.path)}};
+  D.accts[name]=a;D.session=name;A=a;save();$('#lp').value='';view();
+}
+async function addUser(){
+  const name=$('#nn').value.trim().toLowerCase(),pw=$('#np').value;
+  if(!/^[a-z0-9_-]{2,20}$/.test(name)||!pw)throw new Error('Username: 2-20 letters, numbers, - or _. Password is required.');
+  await api('/admin/user',{name,password:pw,role:$('#nr').value});
+  $('#nn').value=$('#np').value='';log('Created '+name+'. They can sign in now.');
+}
+async function firstAdmin(){
+  const name=$('#ln').value.trim().toLowerCase(),pw=$('#lp').value,sk=$('#sk').value;
+  if(!sk)throw new Error('Enter the setup key first.');
+  await api('/admin/user',{name,password:pw,role:'admin',setup:sk});
+  log('Created admin '+name+'. You can sign in now.');
+}
+async function checkWorker(){
+  if(!D.api)throw new Error('Set the Worker address first.');
+  log((await(await fetch(D.api+'/ping')).json()).ok?'Worker reachable':'Unexpected reply from the Worker');
+}
+// a webhook Discord calls gone is re-checked three times (slow is not missing); nothing changes by itself
+const gone={};
+async function hookGone(hook){
+  const kind=hook===A?.meta?.hook?'meta':hook===A?.data?.hook?'data':null;
+  if(!kind||gone[kind])return;gone[kind]='checking';
+  for(let i=0;i<3;i++){
+    await sleep(4000);
+    try{const r=await fetch(D.proxy?wrapU(hook):hook);if(r.status!==404){gone[kind]=0;return}}catch{gone[kind]=0;return}
+  }
+  gone[kind]=1;banner(kind);
+}
+function banner(kind){
+  const b=$('#wb');
+  b.innerHTML='Webhook missing ('+kind+'), please rotate to a new one <a href="#" id="wr">here</a>';
+  b.hidden=false;
+  $('#wr').onclick=e=>{e.preventDefault();rotate(kind).catch(x=>log(x.message,1))};
+}
+async function rotate(kind){
+  for(const k of kind==='both'?['meta','data']:[kind]){
+    const j=await api('/rotate',{ch:k});
+    A[k].hook=hookUrl(j.path);gone[k]=0;
+    if(k==='meta'&&j.smid)A.smid=j.smid;
+  }
+  save();view();
+  if(!gone.meta&&!gone.data)$('#wb').hidden=true;
+  log('Webhook rotated');
+}
+// delete one message: the webhook for its own messages, the Worker's bot for ones an older webhook posted
+async function delMsg(ch,hook,id){
+  try{await hf(hook,'/messages/'+id,{method:'DELETE'})}
+  catch(e){if(!/^(404|403)/.test(e.message)||!A.token)throw e;await api('/del',{ch,id}).catch(()=>{})}
+}
+
+// per-file metadata: one small message per file in the metadata channel
+// small records are one text message; once over 2000 chars (or already big) the chunk list lives in <id>.json
+function pack(f){
+  const{mid,...r}=f;
+  const s=JSON.stringify({t:'f',...r});
+  if(!f.big&&s.length<=2000)return{s,file:null};
+  f.big=1;
+  const{chunks,...rest}=r;
+  return{s:JSON.stringify({t:'f',...rest,big:1}),file:new Blob([JSON.stringify(chunks)],{type:'application/json'})};
+}
+async function getChunks(f){
+  if(f.chunks)return f.chunks;
+  const m=await metaOf(f.mid),r=await cdn((m.attachments.find(a=>/\.json$/.test(a.filename))||m.attachments[0]).url);
+  await bad(r);
+  f.chunks=await r.json();save();return f.chunks;
+}
+async function editMeta(f){
+  try{await editMeta0(f)}
+  catch(e){if(!/^(404|403)/.test(e.message)||!A.token)throw e;await repost(f);save();render()} // the old webhook posted it: copy to a new message, delete the old one
+}
+async function repost(f){
+  const old=f.mid,m=await metaOf(old),p=pack(f),fd=new FormData(),fl=[];
+  fd.append('payload_json',JSON.stringify({content:p.s}));
+  if(p.file)fl.push([p.file,f.id+'.json']);
+  const tu=m.attachments?.find(a=>/^t-/.test(a.filename));
+  if(tu)fl.push([await(await cdn(tu.url)).blob(),tu.filename]);
+  fl.forEach(([b,n],i)=>fd.append('files['+i+']',b,n));
+  f.mid=(await hf(A.meta.hook,'?wait=true',{method:'POST',body:fd})).id;
+  await api('/del',{ch:'meta',id:old}).catch(()=>{});
+}
+async function editMeta0(f){
+  const was=!!f.big;f.edited=Date.now();
+  const{s,file}=pack(f);
+  if(file&&!was){
+    const fd=new FormData();
+    const keep=((await hf(A.meta.hook,'/messages/'+f.mid)).attachments||[]).map(a=>({id:a.id}));
+    fd.append('payload_json',JSON.stringify({content:s,attachments:[...keep,{id:0,filename:f.id+'.json'}]}));
+    fd.append('files[0]',file,f.id+'.json');
+    await hf(A.meta.hook,'/messages/'+f.mid,{method:'PATCH',body:fd});
+  }else await hf(A.meta.hook,'/messages/'+f.mid,{method:'PATCH',headers:J,body:JSON.stringify({content:s})});
+  save();render();
+}
+
+// upload: BATCH chunks in parallel, then wait out the rest of GAP; chunk labels carry id|index|total|bytes
+async function sendChunk(file,i,n,id){
+  for(let t=0;;t++){
+    // a file that fits in one chunk goes up as a normal attachment (real name and type); if that fails it falls back to chunk style
+    const raw=n===1&&t===0,b=raw?file:file.slice(i*CH,(i+1)*CH,'application/octet-stream'),nm=raw?file.name:id+'.p'+i;
+    try{return(await put(A.data.hook,b,nm,[id,i,n,b.size].join('|'))).id}
+    catch(e){if(t>=2)throw e;log((raw?'Normal upload failed, retrying as a chunk: ':'Retrying chunk '+(i+1)+': ')+e.message,1);await sleep(1500)}
+  }
+}
+// phone pickers can hand over files that change or vanish mid-upload (ERR_UPLOAD_FILE_CHANGED), so small files are copied
+// into memory first, and any failure says which step broke and what the file was
+
+// self-test: pushes small files of different types through the real upload path, reads them back from Discord, compares bytes
+async function selfTest(){
+  const cv=(w,h,fmt,q)=>new Promise(r=>{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#4285f4';x.fillRect(0,0,w,h);x.fillStyle='#fbbc04';x.fillRect(0,0,w/2,h/2);c.toBlob(r,fmt,q)});
+  const rnd=n=>{const a=new Uint8Array(n);for(let i=0;i<n;i+=65536)crypto.getRandomValues(a.subarray(i,Math.min(n,i+65536)));return a};
+  const cases=[
+    ['1 byte text','t.txt','text/plain',new Uint8Array([120])],
+    ['1x1 PNG','a.png','image/png',await cv(1,1,'image/png')],
+    ['64x64 PNG','b.png','image/png',await cv(64,64,'image/png')],
+    ['64x64 JPEG','c.jpg','image/jpeg',await cv(64,64,'image/jpeg',.8)],
+    ['64x64 WebP','d.webp','image/webp',await cv(64,64,'image/webp',.8)],
+    ['1 MB random .bin','e.bin','application/octet-stream',rnd(1<<20)],
+    ['1 MB random named .png','f.png','image/png',rnd(1<<20)]
+  ];
+  let ok=0;
+  for(const[label,name,type,data]of cases){
+    const f=new File([data],name,{type});let step='upload';
+    try{
+      await upload(f);
+      const rec=L().list[L().list.length-1];
+      step='reading back';
+      const parts=[];let tot=0;
+      for(const mid of await getChunks(rec)){const r=await cdn((await msgOf(mid)).attachments[0].url);const b=new Uint8Array(await r.arrayBuffer());parts.push(b);tot+=b.length}
+      const orig=new Uint8Array(await f.arrayBuffer());
+      if(tot!==orig.length)throw new Error('size mismatch: sent '+orig.length+', got '+tot);
+      let o=0;for(const b of parts){for(let i=0;i<b.length;i++)if(b[i]!==orig[o+i])throw new Error('content mismatch at byte '+(o+i));o+=b.length}
+      step='cleanup';await remove(rec);
+      ok++;log('PASS  '+label+' ('+orig.length+' bytes)');
+    }catch(e){log('FAIL  '+label+' at '+step+': '+e.message,1)}
+  }
+  log('Self-test: '+ok+' of '+cases.length+' passed');
+}
+async function upload(file){
+  const st={s:'reading the file'};
+  try{
+    if(file.size<=64*1024*1024)file=new File([await file.arrayBuffer()],file.name,{type:file.type,lastModified:file.lastModified});
+    return await upload0(file,st);
+  }catch(e){throw new Error('"'+file.name+'" ('+(file.type||'unknown type')+', '+fmt(file.size)+') failed while '+st.s+': '+e.message)}
+}
+async function upload0(file,st){
+  st.s='uploading chunks';
+  const id=crypto.randomUUID().slice(0,12),n=Math.max(1,Math.ceil(file.size/CH)),ids=new Array(n);
+  let next=0,done=0;
+  while(next<n){
+    const t0=Date.now(),batch=[];
+    for(let k=0;k<BATCH&&next<n;k++){const i=next++;batch.push(sendChunk(file,i,n,id).then(mid=>{ids[i]=mid;progress(++done/n)}))}
+    await Promise.all(batch);
+    const wait=GAP-(Date.now()-t0);
+    if(next<n&&wait>0)await sleep(wait);
+  }
+  const x=file.name.lastIndexOf('.'),now=Date.now();
+  const f={id,name:x>0?file.name.slice(0,x):file.name,ext:x>0?file.name.slice(x):'',size:file.size,cs:CH,chunks:ids,folder:cur&&cur[0]!=='~'?[cur]:[],uploaded:now,edited:now};
+  st.s='making the thumbnail';
+  const th=await Promise.race([thumb(file).catch(()=>null),sleep(15000).then(()=>null)]);
+  if(th){f.th=1;f.tc=th.c}
+  st.s='saving the file record';
+  const post=async t=>{
+    if(!t){delete f.th;delete f.tc}
+    const p=pack(f),fd=new FormData(),fl=[];
+    fd.append('payload_json',JSON.stringify({content:p.s}));
+    if(p.file)fl.push([p.file,f.id+'.json']);
+    if(t)fl.push([t.b,'t-'+f.id+'.jpg']);
+    fl.forEach(([b,n],i)=>fd.append('files['+i+']',b,n));
+    return hf(A.meta.hook,'?wait=true',{method:'POST',body:fd});
+  };
+  let rs;
+  try{rs=await post(th)}catch(e){if(!th)throw e;log('Saving with a thumbnail failed ('+e.message+'). Retrying without it.',1);rs=await post(null)}
+  f.mid=rs.id;
+  const tu=rs.attachments?.find(a=>/^t-/.test(a.filename));if(tu)TU[f.mid]=[tu.url,Date.now()];
+  L().list.push(f);bump(file.size);log('Saved '+f.name+f.ext);
+}
+
+const bad=async r=>{if(!r.ok)throw new Error('CDN '+r.status+' '+(await r.text().catch(()=>'')).slice(0,200))};
+// attachment links are signed and expire; ask Discord for a fresh one (needs the bot token)
+async function fresh(u){
+  try{const r=await api('/refresh',{urls:[u]});const nu=r.refreshed_urls?.[0]?.refreshed;if(!nu)log('Refresh gave no link',1);return nu||u}
+  catch(e){log('Link refresh failed, using the stale link: '+e.message,1);return u}
+}
+// CDN reads: the link from the message is already signed, so refresh only if it fails (401/403/404)
+let DIRECT=true;
+async function cdn(u,again){
+  let r;
+  if(DIRECT){try{r=await fetch(u)}catch(e){DIRECT=false;log('CDN has no CORS from here, downloads use the proxy')}}
+  if(!r){
+    const p=(D.proxy||'').trim();
+    if(!p)throw new Error('Download blocked by the browser (no CORS on Discord CDN). Add a CORS proxy under Settings.');
+    r=await fetch(/[?=]$/.test(p)?p+u:p.replace(/\/?$/,'/')+u); // raw URL, deliberately not encoded
+  }
+  if(!again&&[401,403,404].includes(r.status))return cdn(await fresh(u),1);
+  return r;
+}
+// message read: the bot reads directly (no proxy); without a bot token the webhook is used
+// message reads: the webhook reads its own messages (no Worker); ones from an older webhook go through the Worker's bot
+const readMsg=async(ch,hook,mid)=>{try{return await hf(hook,'/messages/'+mid)}catch(e){if(/^(404|401|403)/.test(e.message)&&A.token)return api('/msg',{ch,id:mid});throw e}};
+const msgOf=mid=>readMsg('data',A.data.hook,mid);
+
+// download: desktop Chromium saves the chunks natively and merges them from a folder (no proxy at all);
+// everywhere else each chunk is one proxy request, BATCH at a time
+async function download(f){
+  if(window.showDirectoryPicker&&window.showSaveFilePicker&&D.mode!=='worker')return downloadFolder(f);
+  return downloadProxy(f);
+}
+async function downloadFolder(f){
+  const cs=f.cs||CH,ch=await getChunks(f),n=ch.length,sz=i=>Math.min(cs,f.size-i*cs);
+  const out=await showSaveFilePicker({suggestedName:f.name+f.ext});
+  toast('Now pick the folder your browser saves downloads to (a subfolder; Chrome blocks Downloads itself)');
+  const dir=await showDirectoryPicker({mode:'readwrite'}),w=await out.createWritable();
+  try{
+    for await(const[nm]of dir.entries())if(nm.startsWith(f.id+'.p')||nm.startsWith(f.id+' ('))await dir.removeEntry(nm).catch(()=>{});
+    const run=new Map(),tr={},todo=[...Array(n).keys()];let done=0;
+    const start=async i=>{
+      const m=await msgOf(ch[i]),fr=document.createElement('iframe');
+      fr.hidden=true;fr.src=m.attachments[0].url;document.body.appendChild(fr);
+      run.set(i,{t:Date.now(),fr});
+    };
+    while(done<n){
+      while(todo.length&&run.size<BATCH)await start(todo.shift());
+      await sleep(700);
+      for(const[i,r]of[...run]){
+        const nm=f.id+'.p'+i;let file=null;
+        try{file=await(await dir.getFileHandle(nm)).getFile()}catch{}
+        if(file&&file.size===sz(i)){
+          await w.write({type:'write',position:i*cs,data:await file.arrayBuffer()});
+          await dir.removeEntry(nm);r.fr.remove();run.delete(i);progress(++done/n);
+        }else if(Date.now()-r.t>6e5){
+          r.fr.remove();run.delete(i);
+          if((tr[i]=(tr[i]||0)+1)>2)throw new Error('Chunk '+(i+1)+' never showed up in the folder. Is that the folder your browser saves to?');
+          todo.push(i);log('Chunk '+(i+1)+' timed out, retrying',1);
+        }
+      }
+    }
+    await w.close();log('Downloaded '+f.name+f.ext);
+  }catch(e){await w.abort().catch(()=>{});throw e}
+}
+async function downloadProxy(f){
+  const cs=f.cs||CH,parts=[];let w=null,tmp=null,root=null,done=0;
+  if(window.showSaveFilePicker)w=await(await showSaveFilePicker({suggestedName:f.name+f.ext})).createWritable();
+  else try{ // phones: write into the origin-private file system so big files don't sit in RAM
+    root=await navigator.storage.getDirectory();
+    for await(const[nm]of root.entries())if(nm.startsWith('dl-'))await root.removeEntry(nm).catch(()=>{});
+    tmp=await root.getFileHandle('dl-'+f.id,{create:true});w=await tmp.createWritable();
+  }catch{w=null;tmp=null}
+  const ch=await getChunks(f),n=ch.length;
+  for(let s=0;s<n;s+=BATCH){
+    await Promise.all(ch.slice(s,s+BATCH).map(async(mid,k)=>{
+      const i=s+k,m=await msgOf(mid),r=await cdn(m.attachments[0].url);
+      await bad(r);
+      const b=await r.arrayBuffer();
+      if(!b.byteLength)throw new Error('Chunk '+(i+1)+' downloaded as 0 bytes (link expired or blocked).');
+      if(w)await w.write({type:'write',position:i*cs,data:b});else parts[i]=b;
+      progress(++done/n);
+    }));
+  }
+  if(w)await w.close();
+  if(tmp||parts.length){
+    const a=document.createElement('a');a.download=f.name+f.ext;
+    a.href=URL.createObjectURL(tmp?await tmp.getFile():new Blob(parts));a.click();
+  }
+  log('Downloaded '+f.name+f.ext);
+}
+async function remove(f){
+  for(const id of await getChunks(f))await delMsg('data',A.data.hook,id);
+  await delMsg('meta',A.meta.hook,f.mid);
+  const l=L();l.list=l.list.filter(x=>x.mid!==f.mid);delete TU[f.mid];bump(-f.size);log('Deleted '+f.name+f.ext);
+}
+
+// sync: the bot lists the metadata channel (webhooks can't list); incremental by default
+async function sync(full){
+  const l=L(),mc=A.meta?.chan;
+  if(!mc)throw new Error('Run Test or create channels first so the metadata channel is known.');
+  const got=[];let c=full?'':(l.last||'0');
+  for(;;){
+    const ms=await api('/sync',full?(c?{before:c}:{}):{after:c});
+    if(!ms.length)break;
+    got.push(...ms);
+    c=full?ms[ms.length-1].id:ms.reduce((a,m)=>BigInt(m.id)>BigInt(a)?m.id:a,c);
+    if(ms.length<100)break;
+  }
+  const fs=[];let last=full?'':(l.last||'');const ds=[];
+  for(const m of got){
+    if(!last||BigInt(m.id)>BigInt(last))last=m.id;
+    try{
+      const o=JSON.parse(m.content);
+      if(o.t==='d'){ds.push({path:o.path,mid:m.id});continue}
+      if(o.t!=='f')continue;
+      const old=l.list.find(x=>x.mid===m.id);
+      if(o.big&&old?.chunks)o.chunks=old.chunks;
+      fs.push({...o,mid:m.id});
+      const tu=m.attachments?.find(a=>/^t-/.test(a.filename));if(tu)TU[m.id]=[tu.url,Date.now()];
+    }catch{}
+  }
+  l.list=full?fs:l.list.concat(fs.filter(f=>!l.list.some(x=>x.mid===f.mid)));
+  l.dirs=full?ds:(l.dirs||[]).filter(d=>!ds.some(x=>x.mid===d.mid)).concat(ds);
+  l.last=last;if(full||A.used==null){A.used=l.list.reduce((a,f)=>a+f.size,0);pushUsed()}save();render();log((full?'Full sync: ':'Sync: ')+got.length+' messages read, '+l.list.length+' files');
+}
+
+async function test(){
+  for(const k of['meta','data']){
+    const h=A[k]?.hook;if(!h){log(k+' webhook is missing.',1);continue}
+    const w=await hf(h,'');A[k].chan=w.channel_id;log(k+' webhook OK, channel '+w.channel_id);
+  }
+  save();
+  if(!A.data?.hook)return;
+  const m=await put(A.data.hook,new Blob(['x']),'t.txt','test');log('Upload OK');
+  const g=await hf(A.data.hook,'/messages/'+m.id);log('Read-back OK');
+  try{const c=await cdn(g.attachments[0].url);log(c.ok?'CDN read OK':'CDN read failed '+c.status,!c.ok)}
+  catch{log('CDN blocked by CORS from this origin. Downloads would need a proxy.',1)}
+  await hf(A.data.hook,'/messages/'+m.id,{method:'DELETE'});log('Delete OK');
+}
+
+// UI: folders are paths like "Photos/2024"; the current folder lives in the URL hash (#/Photos/2024)
+const par=p=>p.split('/').slice(0,-1).join('/'),base=p=>p.split('/').pop(),join=(a,b)=>a?a+'/'+b:b;
+const clean=n=>(n||'').replace(/[\/\\]/g,'-').trim(),inF=(p,r)=>p===r||p.startsWith(r+'/');
+const here=()=>{try{return location.hash.replace(/^#\/?/,'').split('/').filter(Boolean).map(decodeURIComponent).join('/')}catch{return''}};
+const nav=p=>{location.hash='#/'+p.split('/').filter(Boolean).map(encodeURIComponent).join('/')};
+const dirs=()=>(L().dirs??=[]);
+// Drive-style UI: icons by file type, selection, grid/list, sort, context menu, keyboard
+const P={folder:'M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z',image:'M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5z',video:'M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V4z',audio:'M12 3v10.55A4 4 0 1 0 14 17V7h4V3z',file:'M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6zm7 1.5L18.5 9H13V3.5z'};
+const KC={folder:'#c4c7c5',image:'#f28b82',video:'#f28b82',audio:'#fdd663',pdf:'#f28b82',doc:'#8ab4f8',sheet:'#81c995',zip:'#c4c7c5',file:'#9aa0a6'};
+const EXT={};[['image','jpg jpeg png gif webp avif bmp svg heic'],['video','mp4 m4v mov webm mkv avi ogv'],['audio','mp3 m4a wav ogg flac aac'],['pdf','pdf'],['doc','doc docx txt odt rtf md'],['sheet','xls xlsx csv'],['zip','zip rar 7z tar gz']].forEach(([k,v])=>v.split(' ').forEach(e=>EXT[e]=k));
+const kindOf=f=>EXT[(f.ext||'').slice(1).toLowerCase()]||'file';
+const SVG=d=>'<svg class="i" viewBox="0 0 24 24"><path d="'+d+'"/></svg>';
+const ico=(k,big)=>'<svg class="i'+(big?' big':'')+'" viewBox="0 0 24 24" style="color:'+KC[k]+'"><path d="'+(P[k]||P.file)+'"/></svg>';
+let sel=new Set(),VIS=[],anchor=null;
+const clearSel=()=>{if(sel.size){sel=new Set();render()}};
+const TU=D.tu||(D.tu={}),LIMIT=1e12;
+// storage used lives in the user record (first metadata message): looked up once, then adjusted on upload and delete
+async function pushUsed(){
+  save();
+  try{ // the usage message is posted by the user's own webhook, so it can edit it
+    if(!A.meta?.hook||!A.smid)return;
+    await hf(A.meta.hook,'/messages/'+A.smid,{method:'PATCH',headers:J,body:JSON.stringify({content:JSON.stringify({t:'s',used:A.used})})});
+  }catch(e){log('Could not save storage usage: '+e.message,1)}
+}
+function bump(d){
+  if(A.used==null)A.used=L().list.reduce((a,f)=>a+f.size,0);else A.used=Math.max(0,A.used+d);
+  render();pushUsed();
+}
+// thumbnails: made in the browser at upload (256px JPEG), stored as a second attachment on the metadata message
+async function thumb(file){
+  const ty=(file.type||'').split('/')[0];
+  if(ty!=='image'&&ty!=='video')return null;
+  const url=URL.createObjectURL(file);
+  try{
+    let src,w,h;
+    if(ty==='image'){const im=new Image();im.src=url;await Promise.race([im.decode(),new Promise((_,no)=>setTimeout(()=>no(new Error('decode timeout')),8000))]);src=im;w=im.naturalWidth;h=im.naturalHeight}
+    else{
+      const v=document.createElement('video');v.muted=true;v.preload='auto';
+      const ev=n=>new Promise((ok,no)=>{v.addEventListener(n,ok,{once:true});v.addEventListener('error',no,{once:true});setTimeout(no,10000)});
+      let pr=ev('loadeddata');v.src=url;await pr;
+      pr=ev('seeked');v.currentTime=Math.min(1,(v.duration||2)*.1);await pr;
+      src=v;w=v.videoWidth;h=v.videoHeight;
+    }
+    if(!w||!h)return null;
+    const k=Math.min(1,256/Math.max(w,h)),c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(w*k));c.height=Math.max(1,Math.round(h*k));
+    c.getContext('2d').drawImage(src,0,0,c.width,c.height);
+    const a=document.createElement('canvas');a.width=a.height=1;const ax=a.getContext('2d');ax.drawImage(c,0,0,1,1);
+    const d=ax.getImageData(0,0,1,1).data;
+    const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.7));
+    return b?{b,c:'#'+[d[0],d[1],d[2]].map(n=>n.toString(16).padStart(2,'0')).join('')}:null;
+  }finally{URL.revokeObjectURL(url)}
+}
+const metaOf=mid=>readMsg('meta',A.meta.hook,mid);
+let tq=Promise.resolve();
+const thq=fn=>{const r=tq.then(fn);tq=r.catch(()=>{}).then(()=>sleep(300));return r};
+async function loadThumb(img,retry){
+  const mid=img.dataset.m,e=TU[mid];
+  try{
+    let u=e&&Date.now()-e[1]<72e6?e[0]:null;
+    if(!u){
+      const m=await thq(()=>metaOf(mid));
+      u=m.attachments.find(a=>/^t-/.test(a.filename))?.url;
+      if(!u)return;
+      TU[mid]=[u,Date.now()];save();
+    }
+    img.onload=()=>img.classList.add('ok');
+    img.onerror=()=>{if(!retry){delete TU[mid];loadThumb(img,1)}};
+    img.src=u;
+  }catch{}
+}
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);loadThumb(e.target)}}),{rootMargin:'200px'});
+function paths(){
+  const s=new Set(dirs().map(d=>d.path));
+  L().list.forEach(f=>(f.folder||[]).forEach(p=>s.add(p)));
+  [...s].forEach(p=>{let q=par(p);while(q){s.add(q);q=par(q)}});
+  return[...s].sort((a,b)=>a.localeCompare(b));
+}
+const VW={'~recent':['r','Recent'],'~starred':['s','Starred'],'~trash':['t','Trash']};
+function render(){
+  if(!A)return;
+  const q=($('#q').value||'').trim().toLowerCase(),all=L().list,vw=VW[cur],tr=cur==='~trash',live=all.filter(f=>!f.trash);
+  const S=D.sort||(D.sort={k:'name',d:1}),segs=!vw&&cur?cur.split('/'):[];
+  $('#crumbs').innerHTML=vw?'<b>'+vw[1]+'</b>':'<a href="#/">My Drive</a>'+segs.map((s,i)=>'<span>›</span><a href="#/'+segs.slice(0,i+1).map(encodeURIComponent).join('/')+'">'+esc(s)+'</a>').join('');
+  document.querySelectorAll('nav .nv[data-v]').forEach(a=>a.classList.toggle('on',a.dataset.v===(vw?vw[0]:'d')));
+  const hit=f=>(f.name+f.ext).toLowerCase().includes(q);
+  let fo=[],fi;
+  if(cur==='~recent')fi=live.filter(hit).sort((a,b)=>b.edited-a.edited).slice(0,100);
+  else if(tr)fi=all.filter(f=>f.trash&&hit(f)).sort((a,b)=>b.edited-a.edited);
+  else{
+    if(cur==='~starred')fi=live.filter(f=>f.star&&hit(f));
+    else if(q){fo=paths().filter(p=>base(p).toLowerCase().includes(q));fi=live.filter(hit)}
+    else{fo=paths().filter(p=>par(p)===cur);fi=live.filter(f=>cur?(f.folder||[]).includes(cur):!(f.folder||[]).length)}
+    fo.sort((a,b)=>base(a).localeCompare(base(b))*(S.k==='name'?S.d:1));
+    fi.sort((a,b)=>S.d*(S.k==='size'?a.size-b.size:S.k==='mod'?a.edited-b.edited:(a.name+a.ext).localeCompare(b.name+b.ext)));
+  }
+  const items=fo.map(p=>({key:'p:'+p,p})).concat(fi.map(f=>({key:'m:'+f.mid,f})));
+  VIS=items.map(x=>x.key);sel=new Set([...sel].filter(k=>VIS.includes(k)));
+  const more='<button class="more" aria-label="More">⋮</button>';
+  const html=x=>{
+    const dir=!!x.p,f=x.f,nm=dir?base(x.p):f.name+f.ext,k=dir?'folder':kindOf(f),on=sel.has(x.key)?' on':'',key=esc(x.key);
+    const star=f&&f.star?'<span class="st" title="Starred">★</span>':'';
+    if(D.grid){
+      const tc=f&&/^#[0-9a-f]{6}$/i.test(f.tc||'')?f.tc:'#1e1f20';
+      return'<div class="c'+on+'" data-k="'+key+'">'+(f&&f.th?'<div class="cv" style="background:'+tc+'"><img data-m="'+f.mid+'" alt=""></div>':'<div class="cv">'+ico(k,1)+'</div>')+'<div class="cn">'+ico(k)+'<b>'+esc(nm)+'</b>'+star+more+'</div></div>';
+    }
+    return'<div class="r'+on+'" data-k="'+key+'"><span class="nm">'+ico(k)+'<span class="t"><b>'+esc(nm)+'</b><small class="sub">'+(dir?esc(q?par(x.p)||'My Drive':'Folder'):dt(f.edited)+' · '+fmt(f.size))+'</small></span>'+star+'</span><span class="mu">'+(dir?'—':dt(f.edited))+'</span><span class="mu">'+(dir?'—':fmt(f.size))+'</span>'+more+'</div>';
+  };
+  $('#list').className=D.grid?'grid':'';
+  $('#list').innerHTML=items.length?items.map(html).join(''):'<div class="empty">'+(q?'No results.':tr?'Trash is empty.':cur==='~starred'?'Star files to find them here.':cur==='~recent'?'Nothing here yet.':'Drop files here, or use New to upload files or add a folder.')+'</div>';
+  $('#list').querySelectorAll('img[data-m]').forEach(i=>io.observe(i));
+  $('#head').hidden=!!D.grid;
+  $('#head').querySelectorAll('[data-s]').forEach(b=>{const k=b.dataset.s;b.textContent={name:'Name',mod:'Modified',size:'Size'}[k]+(S.k===k&&!vw?(S.d>0?' ↑':' ↓'):'')});
+  $('#vt').innerHTML=SVG(D.grid?'M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z':'M3 3v8h8V3H3zm6 6H5V5h4v4zm-6 4v8h8v-8H3zm6 6H5v-4h4v4zm4-16v8h8V3h-8zm6 6h-4V5h4v4zm-6 4v8h8v-8h-8zm6 6h-4v-4h4v4z');
+  $('#sb').hidden=!sel.size;$('#crumbs').hidden=!!sel.size;$('#et').hidden=!(tr&&!sel.size&&items.length);
+  $('#sbn').textContent=sel.size+' selected';
+  $('#sbb').innerHTML=tr?'<button data-a="rest">Restore</button><button data-a="del">Delete forever</button>':'<button data-a="dl">Download</button>'+(sel.size===1?'<button data-a="ren">Rename</button>':'')+'<button data-a="mv">Move</button><button data-a="star">Star</button><button data-a="trash">Move to trash</button>';
+  const used=A.used??all.reduce((a,f)=>a+f.size,0);
+  $('#stor').innerHTML='<div class="meter"><i style="width:'+Math.min(100,used/LIMIT*100).toFixed(2)+'%"></i></div>'+fmt(used)+' of 1 TB used';
+}
+function view(){
+  $('#login').hidden=!!A;$('#app').hidden=!A;
+  $('#conn').hidden=!A;$('#users').hidden=!A||A.role!=='admin';
+  if(!A)return;
+  $('#who').textContent=A.name;$('#role').textContent=A.role;$('#av').textContent=A.name[0].toUpperCase();
+  $('#mh').value=A.meta?.hook||'';$('#dh').value=A.data?.hook||'';
+  $('#ulist').innerHTML=Object.values(D.accts).map(u=>'<div>'+esc(u.name)+' <small>'+u.role+(u.meta?.hook?'':' (no channels yet)')+'</small></div>').join('');
+  render();
+}
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,5000)}
+function menu(items,r){
+  const m=$('#menu');
+  m.innerHTML=items.map(([k,l,c])=>'<button data-a="'+k+'" class="'+(c||'')+'">'+l+'</button>').join('');
+  m.hidden=false;
+  m.style.left=Math.max(8,Math.min(r.left,innerWidth-m.offsetWidth-8))+'px';
+  m.style.top=Math.max(8,Math.min(r.bottom,innerHeight-m.offsetHeight-8))+'px';
+}
+// folders are stored as small {t:'d',path} messages so they exist while empty and sync across devices
+async function mkdir(path){
+  if(paths().includes(path))return;
+  const m=await put(A.meta.hook,null,'',JSON.stringify({t:'d',path}));
+  dirs().push({path,mid:m.id});save();render();log('Created folder '+path);
+}
+async function renameDir(p){
+  const n=clean(prompt('Folder name',base(p)));if(!n||n===base(p))return;
+  const np=join(par(p),n),re=x=>inF(x,p)?np+x.slice(p.length):x;
+  for(const d of dirs().filter(d=>inF(d.path,p))){d.path=re(d.path);await hf(A.meta.hook,'/messages/'+d.mid,{method:'PATCH',headers:J,body:JSON.stringify({content:JSON.stringify({t:'d',path:d.path})})})}
+  for(const f of L().list.filter(f=>(f.folder||[]).some(x=>inF(x,p)))){f.folder=f.folder.map(re);await editMeta(f)}
+  if(inF(cur,p))nav(re(cur));save();render();
+}
+async function removeDir(p){
+  if(!confirm('Remove folder "'+base(p)+'"? Nothing is deleted: its files move up to the parent folder.'))return;
+  const up=par(p);
+  for(const f of L().list.filter(f=>(f.folder||[]).some(x=>inF(x,p)))){f.folder=[...new Set(f.folder.map(x=>inF(x,p)?up:x).filter(Boolean))];await editMeta(f)}
+  for(const d of dirs().filter(d=>inF(d.path,p)))await hf(A.meta.hook,'/messages/'+d.mid,{method:'DELETE'});
+  L().dirs=dirs().filter(d=>!inF(d.path,p));
+  if(inF(cur,p))nav(up);save();render();
+}
+function openMove(fs){
+  $('#mvl').innerHTML='<button data-to="">My Drive</button>'+paths().map(p=>'<button data-to="'+esc(p)+'" style="padding-left:'+(12+p.split('/').length*14)+'px">'+esc(base(p))+'</button>').join('');
+  $('#mvd').dataset.m=fs.map(x=>x.mid).join(',');$('#mvd').showModal();
+}
+const guard=fn=>async(...a)=>{try{await fn(...a)}catch(e){log(e.message,1)}};
+$('#px').value=D.api||'';$('#px').oninput=e=>{setApi(e.target.value);save()};$('#dm').value=D.mode||'auto';$('#dm').onchange=e=>{D.mode=e.target.value;save()};
+$('#mh').oninput=e=>{(A.meta??={}).hook=e.target.value.trim().replace(/\/+$/,'');save()};
+$('#dh').oninput=e=>{(A.data??={}).hook=e.target.value.trim().replace(/\/+$/,'');save()};
+$('#go').onclick=guard(login);
+$('#lp').onkeydown=e=>{if(e.key==='Enter')$('#go').click()};
+$('#out').onclick=()=>{D.session='';A=null;cur='';save();$('#set').close();view()};
+$('#add').onclick=guard(addUser);
+$('#prov').onclick=guard(async()=>{if(confirm('Create new webhooks and delete the current ones?'))await rotate('both')});
+$('#chk').onclick=guard(checkWorker);
+$('#mk1').onclick=guard(firstAdmin);
+$('#test').onclick=guard(test);
+$('#stt').onclick=guard(selfTest);
+$('#rf').onclick=guard(()=>sync(false));
+$('#st').onclick=$('#ls').onclick=()=>$('#set').showModal();
+$('#q').oninput=render;
+let pend=null;
+const acct=()=>[['set','Settings'],['sync','Sync'],['full','Full sync (re-read everything)'],['out','Sign out']];
+const addm=()=>[['nf','New folder'],['up','File upload']];
+$('#new').onclick=$('#fab').onclick=e=>{pend=null;menu(addm(),e.currentTarget.getBoundingClientRect())};
+$('#av').onclick=e=>{pend=null;menu(acct(),e.currentTarget.getBoundingClientRect())};
+const target=()=>{
+  const ks=[...sel],fs=ks.filter(k=>k[0]==='m').map(k=>L().list.find(x=>x.mid===k.slice(2))).filter(Boolean),ps=ks.filter(k=>k[0]==='p').map(k=>k.slice(2));
+  return{fs,p:ps.length===1&&!fs.length?ps[0]:undefined,f:fs.length===1&&!ps.length?fs[0]:undefined};
+};
+function ctx(rect){
+  pend=target();const{f,p,fs}=pend;let it;
+  if(cur==='~trash'&&fs.length)it=[['rest','Restore'],['del','Delete forever','del']];
+  else if(p)it=[['open','Open'],['renf','Rename'],['delf','Remove folder','del']];
+  else if(f)it=(MIME[(f.ext||'').slice(1).toLowerCase()]?[['pv','Open / play']]:[]).concat([['dl','Download'],['ren','Rename'],['mv','Move to…'],['star',f.star?'Remove from starred':'Add to starred'],['trash','Move to trash','del']]);
+  else if(fs.length)it=[['dl','Download'],['mv','Move to…'],['star','Star'],['trash','Move to trash','del']];
+  else return;
+  menu(it,rect);
+}
+const openK=guard(async k=>{
+  if(k.startsWith('p:'))return nav(k.slice(2));
+  const f=L().list.find(x=>x.mid===k.slice(2));
+  if(f)await(MIME[(f.ext||'').slice(1).toLowerCase()]?preview(f):download(f));
+});
+$('#list').onclick=e=>{
+  const r=e.target.closest('[data-k]');if(!r)return clearSel();
+  const k=r.dataset.k,mb=e.target.closest('.more'),touch=matchMedia('(pointer:coarse)').matches;
+  if(mb){const rc=mb.getBoundingClientRect();if(!sel.has(k))sel=new Set([k]);render();return ctx(rc)}
+  if(touch&&!sel.size)return openK(k);
+  if(e.ctrlKey||e.metaKey||touch){sel.has(k)?sel.delete(k):sel.add(k);anchor=k}
+  else if(e.shiftKey&&anchor){const a=VIS.indexOf(anchor),b=VIS.indexOf(k);sel=new Set(VIS.slice(Math.min(a,b),Math.max(a,b)+1))}
+  else{sel=new Set([k]);anchor=k}
+  render();
+};
+$('#list').ondblclick=e=>{const r=e.target.closest('[data-k]');if(r&&!e.target.closest('.more'))openK(r.dataset.k)};
+$('#list').oncontextmenu=e=>{
+  const r=e.target.closest('[data-k]');if(!r)return;e.preventDefault();
+  if(!sel.has(r.dataset.k)){sel=new Set([r.dataset.k]);render()}
+  ctx({left:e.clientX,bottom:e.clientY});
+};
+$('#head').onclick=e=>{const k=e.target.dataset.s;if(!k)return;const S=D.sort||{k:'name',d:1};D.sort=S.k===k?{k,d:-S.d}:{k,d:1};save();render()};
+$('#vt').onclick=()=>{D.grid=!D.grid;save();render()};
+$('#gear').onclick=()=>$('#set').showModal();
+$('#et').onclick=guard(async()=>{const fs=L().list.filter(f=>f.trash);if(fs.length&&confirm('Permanently delete '+fs.length+' files from Discord? This cannot be undone.'))for(const x of fs)await remove(x)});
+addEventListener('keydown',e=>{
+  if(!A||e.target.closest('input,textarea,select,dialog'))return;
+  if(e.key==='/'){e.preventDefault();$('#q').focus()}
+  else if(e.key==='Escape'){sel=new Set();$('#menu').hidden=true;render()}
+  else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='a'){e.preventDefault();sel=new Set(VIS);render()}
+  else if(e.key==='Delete'&&sel.size){pend=target();doAct(pend.p?'delf':cur==='~trash'?'del':'trash')}
+  else if(e.key==='Enter'&&sel.size===1)openK([...sel][0]);
+});
+document.onclick=e=>{if(!e.target.closest('#menu,.more,#new,#fab,#av'))$('#menu').hidden=true};
+const doAct=guard(async a=>{
+  $('#menu').hidden=true;const f=pend?.f,p=pend?.p,fs=pend?.fs||[];
+  if(a==='open')nav(p);
+  if(a==='pv')await preview(f);
+  if(a==='nf'){const n=clean(prompt('New folder'));if(n)await mkdir(join(cur[0]==='~'?'':cur,n))}
+  if(a==='up')$('#pick').click();
+  if(a==='set')$('#set').showModal();
+  if(a==='sync')await sync(false);
+  if(a==='full')await sync(true);
+  if(a==='out')$('#out').click();
+  if(a==='dl')for(const x of fs)await download(x);
+  if(a==='ren'){const n=prompt('File name (without extension)',f.name);if(n){f.name=n.trim();await editMeta(f)}}
+  if(a==='mv')openMove(fs);
+  if(a==='del'&&fs.length&&confirm('Delete '+(fs.length>1?fs.length+' files':'"'+fs[0].name+fs[0].ext+'"')+' forever from Discord? This cannot be undone.'))for(const x of fs)await remove(x);
+  if(a==='trash'||a==='rest'){for(const x of fs){x.trash=a==='trash';await editMeta(x)}}
+  if(a==='star'){const on=!fs.every(x=>x.star);for(const x of fs){x.star=on;await editMeta(x)}}
+  if(a==='renf')await renameDir(p);
+  if(a==='delf')await removeDir(p);
+  sel=new Set();render();
+});
+$('#menu').onclick=e=>{const a=e.target.dataset.a;if(a)doAct(a)};
+$('#sb').onclick=e=>{
+  let a=e.target.dataset.a;if(!a)return;
+  if(a==='clr')return clearSel();
+  pend=target();if(pend.p){if(a==='ren')a='renf';if(a==='del'||a==='trash')a='delf'}
+  doAct(a);
+};
+$('#mvl').onclick=guard(async e=>{
+  const to=e.target.dataset.to;if(to===undefined)return;
+  const fs=$('#mvd').dataset.m.split(',').map(m=>L().list.find(x=>x.mid===m)).filter(Boolean);$('#mvd').close();
+  for(const f of fs){f.folder=to?[to]:[];await editMeta(f)}
+});
+$('#pick').onchange=guard(async e=>{const fs=Array.from(e.target.files);e.target.value='';for(const f of fs)await upload(f)});
+let dc=0;
+addEventListener('dragenter',e=>{if(A&&e.dataTransfer?.types?.includes('Files')){dc++;$('#drop').hidden=false}});
+addEventListener('dragleave',()=>{if(--dc<=0){dc=0;$('#drop').hidden=true}});
+addEventListener('dragover',e=>e.preventDefault());
+addEventListener('drop',guard(async e=>{e.preventDefault();dc=0;$('#drop').hidden=true;if(!A)return;for(const f of Array.from(e.dataTransfer.files))await upload(f)}));
+addEventListener('hashchange',()=>{botRoute();cur=here();$('#q').value='';sel=new Set();render()});
+// preview / streaming: sw.js answers the player's Range requests and pulls only the needed bytes from the right chunk
+const MIME={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',webp:'image/webp',avif:'image/avif',bmp:'image/bmp',svg:'image/svg+xml',mp4:'video/mp4',m4v:'video/mp4',mov:'video/quicktime',webm:'video/webm',ogv:'video/ogg',mp3:'audio/mpeg',m4a:'audio/mp4',wav:'audio/wav',ogg:'audio/ogg',flac:'audio/flac',aac:'audio/aac',pdf:'application/pdf'};
+const UC=new Map();
+async function chunkUrl(f,i){
+  const k=f.id+':'+i,c=UC.get(k);
+  if(c&&Date.now()-c.t<18e5)return c.u;
+  const mid=(await getChunks(f))[i],m=await msgOf(mid);
+  let u=m.attachments[0].url;
+  const p=(D.proxy||'').trim();
+  if(p)u=/[?=]$/.test(p)?p+u:p.replace(/\/?$/,'/')+u;   // streaming always goes through the proxy (direct CDN reads are blocked)
+  UC.set(k,{u,t:Date.now()});return u;
+}
+navigator.serviceWorker?.addEventListener('message',async e=>{
+  const d=e.data,port=e.ports[0];if(!port||!A)return;
+  try{
+    const f=L().list.find(x=>x.id===d.fid);if(!f)throw new Error('File not found in the list');
+    if(d.t==='meta')port.postMessage({size:f.size,cs:f.cs||CH,mime:MIME[(f.ext||'').slice(1).toLowerCase()]||'application/octet-stream'});
+    if(d.t==='url')port.postMessage({url:await chunkUrl(f,d.i)});
+  }catch(err){port.postMessage({error:err.message})}
+});
+async function swReady(){
+  if(!('serviceWorker' in navigator))return false;
+  try{
+    await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;
+    if(!navigator.serviceWorker.controller)await new Promise(r=>{navigator.serviceWorker.addEventListener('controllerchange',r,{once:true});setTimeout(r,1500)});
+    return!!navigator.serviceWorker.controller;
+  }catch(e){log('Streaming helper unavailable: '+e.message);return false}
+}
+async function blobOf(f,mt){
+  const parts=[];
+  for(const mid of await getChunks(f)){const m=await hf(A.data.hook,'/messages/'+mid),r=await cdn(m.attachments[0].url);await bad(r);parts.push(await r.arrayBuffer())}
+  return new Blob(parts,{type:mt});
+}
+async function preview(f){
+  const mt=MIME[(f.ext||'').slice(1).toLowerCase()],kind=mt.split('/')[0];let src;
+  if(await swReady())src=new URL('_drive/'+f.id,location.href).href;
+  else if(kind==='image'){toast('sw.js not active, downloading the whole image instead');src=URL.createObjectURL(await blobOf(f,mt))}
+  else throw new Error('Video, audio and PDF need sw.js next to this page. Upload it, then reload once.');
+  $('#pvt').textContent=f.name+f.ext;
+  $('#pvb').innerHTML=kind==='image'?'<img src="'+src+'" alt="">':kind==='video'?'<video src="'+src+'" controls autoplay playsinline></video>':kind==='audio'?'<audio src="'+src+'" controls autoplay></audio>':'<iframe src="'+src+'" style="width:100%;height:70vh;border:0"></iframe>';
+  $('#pvd').showModal();
+}
+$('#pvd').onclose=()=>{$('#pvb').innerHTML=''};  // removing the player cancels its requests
+
+(async()=>{
+  A=D.accts[D.session]||null;botRoute();cur=here();view();
+})();
+</script>
+</body>
+</html>
